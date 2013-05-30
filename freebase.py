@@ -2,6 +2,7 @@ import json
 import urllib
 import re
 import nltk
+import multireplace
 
 class freebase:
 
@@ -68,6 +69,7 @@ class freebase:
     tokens = nltk.word_tokenize(s)
     tagged_tokens = nltk.pos_tag( tokens )
     grammar = "NP: {(<NN>|<NNP>)+}"
+    cp = nltk.RegexpParser(grammar)
     parsed_sentence = cp.parse(tagged_tokens)
 
     noungroups = []
@@ -77,9 +79,8 @@ class freebase:
         for term in e:
           terms.append( term[0] )
         
-        if not noungroup in ignoreList:
-          noungroup = ' '.join(terms)
-          noungroups.append( noungroup )
+        noungroup = ' '.join(terms)
+        noungroups.append( noungroup )
 
     return noungroups
 
@@ -87,18 +88,28 @@ class freebase:
     ''' Expand only groups of nouns with freebase descriptions '''
 
     noungroups = self.getNounGroups ( s )
-    
-    # obtain freebase descriptions for each noungroup if available 
-    for noungroup in noungroups:
-      search_response = self.query ( noungroup, self.defaultfilter )
-      if not search_response < 0:
-        desc = self.obtainDescription ( search_response, params['use_only_first_sentence'] );
-        if len(desc)>0:
-          d = "( " + noungroup + " : " + desc + " )"
-          rep_hash[noungroup] = d
+   
+    print "Noun groups:", ';'.join(noungroups)
 
-    print rep_hash
-    newsentence = multiple_replace ( s, rep_hash )
+    # obtain freebase descriptions for each noungroup if available 
+    rep_hash = {}
+    for noungroup in noungroups:
+      if not noungroup in self.ignoreList:
+        print "Trying to expand noun group", noungroup
+        search_response = self.query ( noungroup, self.defaultfilter )
+        if not search_response < 0:
+          desc = self.obtainDescription ( search_response, params['use_only_first_sentence'] );
+          if len(desc)>0:
+            d = "( " + noungroup + " : " + desc + " )"
+            rep_hash[noungroup] = d
+    
+    if len(rep_hash)>0:
+      print rep_hash
+      newsentence = multireplace.mreplace ( s, rep_hash )
+    else:
+      newsentence = s
+
+    return newsentence
     
 
   def expandSentence ( self, sentence, params ): 
