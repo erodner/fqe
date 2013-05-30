@@ -1,6 +1,7 @@
 import json
 import urllib
 import re
+import nltk
 
 class freebase:
 
@@ -75,6 +76,8 @@ class freebase:
         terms = []
         for term in e:
           terms.append( term[0] )
+        
+        if not noungroup in ignoreList:
           noungroup = ' '.join(terms)
           noungroups.append( noungroup )
 

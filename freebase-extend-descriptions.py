@@ -18,11 +18,12 @@ with open(annofile) as f:
   annodata = json.load(f)
 
 fb = freebase('AIzaSyCkbwbAezPIYCzhnuw7R4gunA0hMOeRAEE', '(all type:/food/food)')
-fb.addIgnoreList ( '../text_embedding/spelling/embedding_vocab.txt' )
-fb.addIgnoreList ( '../text_embedding/spelling/imagenet_vocab.txt' )
+fb.addIgnoreList ( 'embedding_vocab.txt' )
+fb.addIgnoreList ( 'imagenet_vocab.txt' )
 
 params = {
-  'mode': 'EXPAND_ALL_WORDS',
+  #'mode': 'EXPAND_ALL_WORDS',
+  'mode': 'EXPAND_NOUN_GROUPS',
   'use_only_first_sentence': True
 }
 
