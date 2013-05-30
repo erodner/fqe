@@ -30,43 +30,93 @@ class freebase:
       params['use_only_first_sentence'] = False
     return params
 
+  def expandAllWords ( self, s, params ):
+    """ Expand all out-of-vocabulary words """
+    newsentence = ""
+
+    search_response = self.query ( s, self.defaultfilter )
+    if not search_response < 0:
+      d = self.obtainDescription ( search_response, params['use_only_first_sentence'] );
+      if len(d)>0:
+        newsentence = "( " + d + " )";
+
+    words = re.findall( '\w+', s )
+    for word in words:
+      d = word
+      if not word in self.ignoreList:
+        print "Searching for", word
+        search_response = self.query ( word, self.defaultfilter )
+        if not search_response < 0:
+          desc = self.obtainDescription ( search_response, params['use_only_first_sentence'] );
+          if len(desc)>0:
+            d = "( " + word + " : " + desc + " )"
+        else:
+          print "Unable to find", word
+      else:
+        print "Ignoring", word
+     
+      if len(newsentence) > 0:
+        newsentence = newsentence + " " + d
+      else:
+        newsentence = d
+    
+    return newsentence
+
+
+  def getNounGroups ( self, s ):
+    tokens = nltk.word_tokenize(s)
+    tagged_tokens = nltk.pos_tag( tokens )
+    grammar = "NP: {(<NN>|<NNP>)+}"
+    parsed_sentence = cp.parse(tagged_tokens)
+
+    noungroups = []
+    for e in parsed_sentence:
+      if not isinstance(e,tuple):
+        terms = []
+        for term in e:
+          terms.append( term[0] )
+          noungroup = ' '.join(terms)
+          noungroups.append( noungroup )
+
+    return noungroups
+
+  def expandNounGroups ( self, s, params ):
+    ''' Expand only groups of nouns with freebase descriptions '''
+
+    noungroups = self.getNounGroups ( s )
+    
+    # obtain freebase descriptions for each noungroup if available 
+    for noungroup in noungroups:
+      search_response = self.query ( noungroup, self.defaultfilter )
+      if not search_response < 0:
+        desc = self.obtainDescription ( search_response, params['use_only_first_sentence'] );
+        if len(desc)>0:
+          d = "( " + noungroup + " : " + desc + " )"
+          rep_hash[noungroup] = d
+
+    print rep_hash
+    newsentence = multiple_replace ( s, rep_hash )
+    
+
   def expandSentence ( self, sentence, params ): 
     ''' Expand words in the sentence with freebase descriptions when available '''
+    
+    print "Processing:", sentence
     s = sentence.lower()
 
-    params = set_default_params( params )
+    params = self.set_default_params( params )
 
-    if params['mode'] == 'EXPAND_EVERY_WORD':
-      newsentence = ""
-      search_response = self.query ( s, self.defaultfilter )
-      if not search_response < 0:
-        d = self.obtainDescription ( search_response, params['use_only_first_sentence'] );
-        if len(d)>0:
-          newsentence = "( " + d + " )";
+    # Method EXPAND_ALL_WORDS: expand all out-of-vocabulary words
+    if params['mode'] == 'EXPAND_ALL_WORDS':
+      newsentence = self.expandAllWords ( s, params )
+    # Method EXPAND_NOUN_GROUPS: expand all noun groups
+    elif params['mode'] == 'EXPAND_NOUN_GROUPS':
+      newsentence = self.expandNounGroups ( s, params ) 
+    else:
+      print "Mode unknown:", params['mode']
+      return ""
 
-      words = re.findall( '\w+', s )
-      print "Processing:", sentence
-      for word in words:
-        d = word
-        if not word in self.ignoreList:
-          print "Searching for", word
-          search_response = self.query ( word, self.defaultfilter )
-          if not search_response < 0:
-            desc = self.obtainDescription ( search_response, params['use_only_first_sentence'] );
-            if len(desc)>0:
-              d = "( " + word + " : " + desc + " )"
-          else:
-            print "Unable to find", word
-        else:
-          print "Ignoring", word
-       
-        if len(newsentence) > 0:
-          newsentence = newsentence + " " + d
-        else:
-          newsentence = d
-
-      print "Output:", newsentence
-    end
+    print "Output:", newsentence
     
     return newsentence
 
