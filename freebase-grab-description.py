@@ -2,17 +2,22 @@ import json
 import urllib
 import sys
 import re
+import flexconfig
 
 query = sys.argv[1]
 
-API_KEY = 'AIzaSyCkbwbAezPIYCzhnuw7R4gunA0hMOeRAEE'
+parser = flexconfig.get_parser('~/.freebase_config')
+parser.add_argument('--apikey')
+parser.add_argument('--query',nargs='+',required=True)
+args = parser.parse_args()
+
 service_search_url = 'https://www.googleapis.com/freebase/v1/search'
 params = {
-  'query': query,
+  'query': args.uery,
   'filter': '(all type:/food/food)',
   'limit': 20,
 #  'indent': true,
-  'key': API_KEY
+  'key': args.query
 }
 url = service_search_url + '?' + urllib.urlencode(params)
 search_response = json.loads(urllib.urlopen(url).read())
