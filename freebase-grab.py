@@ -1,18 +1,26 @@
 import json
 import urllib
-import sys;
-import re;
+import sys
+import re
+import flexconfig
 
-query = sys.argv[1]
+# This is just a demo freebase script
 
-API_KEY = 'AIzaSyCkbwbAezPIYCzhnuw7R4gunA0hMOeRAEE'
+parser = flexconfig.get_parser('~/.freebase_config')
+parser.add_argument('--query',nargs='+',required=True)
+parser.add_argument('--apikey')
+parser.add_argument('--filter')
+
+args = parser.parse_args()
+print args
+
 service_search_url = 'https://www.googleapis.com/freebase/v1/search'
 params = {
-  'query': query,
-  'filter': '(all type:/food/food)',
+  'query': args.query,
+  'filter': args.filter,
   'limit': 20,
 #  'indent': true,
-  'key': API_KEY
+  'key': args.apikey
 }
 url = service_search_url + '?' + urllib.urlencode(params)
 print "Query URL: ", url
@@ -31,7 +39,7 @@ firstresult = response['result'][0];
 freebase_id=firstresult['mid'];
 
 params = {
-  'key': API_KEY,
+  'key': args.apikey,
 }
 url_topic = 'https://www.googleapis.com/freebase/v1/topic' + freebase_id + "?" + urllib.urlencode(params)
 print "Freebase ID:", freebase_id, " ( ", url_topic, " )"

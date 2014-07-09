@@ -3,21 +3,25 @@ import sys
 from freebase import freebase
 import re
 from pprint import pprint
+import flexconfig
 
+parser = flexconfig.get_parser('~/.freebase_config')
+parser.add_argument('--apikey')
+parser.add_argument('--filter')
+parser.add_argument('--srcannotations', required=True)
+parser.add_argument('--dstannotations', required=True)
 
-if not len( sys.argv ) == 3: 
-  print "Usage: ", sys.argv[0], ": <json-file-with-descriptions> <json-output>"
-  sys.exit(-1)
+args = parser.parse_args()
 
-annofile = sys.argv[1]
-newannofile = sys.argv[2]
+annofile = args.srcannotations
+newannofile = args.dstannotations
 
 
 print "Parsing", annofile
 with open(annofile) as f:
   annodata = json.load(f)
 
-fb = freebase('AIzaSyCkbwbAezPIYCzhnuw7R4gunA0hMOeRAEE', '(all type:/food/food)')
+fb = freebase(args.apikey, args.filter)
 fb.addIgnoreList ( 'embedding_vocab.txt' )
 fb.addIgnoreList ( 'imagenet_vocab.txt' )
 

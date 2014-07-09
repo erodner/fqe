@@ -1,15 +1,23 @@
+# Freebase API class for query expansion
+#
+# Author: Erik Rodner
+# Erik.Rodner <at> uni-jena.de
+# ICSI & EECS UC Berkeley and University of Jena
+
 import json
 import urllib
 import re
 import nltk
 import multireplace
+import os
 
+''' Freebase API class interface for query expansion '''
 class freebase:
 
-  
   def __init__(self, apikey, defaultfilter):
     ''' Contructor for the freebase class: set up API key and default type filter options '''
-    self.apikey = apikey 
+
+    self.apikey = apikey
     self.defaultfilter = defaultfilter
     
     # some pre-defined URL's
@@ -18,6 +26,7 @@ class freebase:
 
     self.ignoreList = set()
 
+
   def addIgnoreList ( self, ignorelistfn ):
     ''' Add a list (filename) of words that will be ignored for the expanding operations '''
     with open(ignorelistfn) as f:
@@ -25,12 +34,14 @@ class freebase:
         self.ignoreList.add ( line.rstrip().lower() )
     print 'Length of the ignore list is', len(self.ignoreList)
 
+
   def set_default_params ( self, params ):
     if not 'mode' in params:
       params['mode'] = 'EXPAND_EVERY_WORD'
     if not 'use_only_first_sentence' in params:
       params['use_only_first_sentence'] = False
     return params
+
 
   def expandAllWords ( self, s, params ):
     """ Expand all out-of-vocabulary words """
@@ -66,6 +77,8 @@ class freebase:
 
 
   def getNounGroups ( self, s ):
+    ''' Get groups of nouns as a list from a given text. The code
+        uses a simple grammar and the NLTK module '''
     tokens = nltk.word_tokenize(s)
     tagged_tokens = nltk.pos_tag( tokens )
     grammar = "NP: {(<NN>|<NNP>)+}"
