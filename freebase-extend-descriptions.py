@@ -7,9 +7,11 @@ import flexconfig
 
 parser = flexconfig.get_parser('~/.freebase_config')
 parser.add_argument('--apikey')
-parser.add_argument('--filter')
-parser.add_argument('--srcannotations', required=True)
-parser.add_argument('--dstannotations', required=True)
+parser.add_argument('--filter', help='restriction to a certain branch in freebase')
+parser.add_argument('--srcannotations', required=True, help='json file with annotations for a set of images')
+parser.add_argument('--dstannotations', required=True, help='output json file')
+parser.add_argument('--mode', default='EXPAND_NOUN_GROUPS', help='EXPAND_NOUN_GROUPS uses NLP parsing to substitute noun groups only, EXPAND_ALL_WORDS substitutes all words not in the ignore list')
+
 
 args = parser.parse_args()
 
@@ -26,8 +28,7 @@ fb.addIgnoreList ( 'embedding_vocab.txt' )
 fb.addIgnoreList ( 'imagenet_vocab.txt' )
 
 params = {
-  #'mode': 'EXPAND_ALL_WORDS',
-  'mode': 'EXPAND_NOUN_GROUPS',
+  'mode': args.mode,
   'use_only_first_sentence': True
 }
 

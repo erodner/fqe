@@ -29,15 +29,18 @@ class freebase:
 
   def addIgnoreList ( self, ignorelistfn ):
     ''' Add a list (filename) of words that will be ignored for the expanding operations '''
-    with open(ignorelistfn) as f:
-      for line in f:
-        self.ignoreList.add ( line.rstrip().lower() )
-    print 'Length of the ignore list is', len(self.ignoreList)
+    try:
+      with open(ignorelistfn) as f:
+        for line in f:
+          self.ignoreList.add ( line.rstrip().lower() )
+      print 'Length of the ignore list is', len(self.ignoreList)
+    except:
+      print "Error loading the ignore list %s." % (ignorelistfn)
 
 
   def set_default_params ( self, params ):
     if not 'mode' in params:
-      params['mode'] = 'EXPAND_EVERY_WORD'
+      params['mode'] = 'EXPAND_ALL_WORDS'
     if not 'use_only_first_sentence' in params:
       params['use_only_first_sentence'] = False
     return params

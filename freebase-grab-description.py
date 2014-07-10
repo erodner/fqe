@@ -4,8 +4,6 @@ import sys
 import re
 import flexconfig
 
-query = sys.argv[1]
-
 parser = flexconfig.get_parser('~/.freebase_config')
 parser.add_argument('--apikey')
 parser.add_argument('--query',nargs='+',required=True)
@@ -13,17 +11,22 @@ args = parser.parse_args()
 
 service_search_url = 'https://www.googleapis.com/freebase/v1/search'
 params = {
-  'query': args.uery,
+  'query': args.query,
   'filter': '(all type:/food/food)',
   'limit': 20,
 #  'indent': true,
-  'key': args.query
+  'key': args.apikey
 }
 url = service_search_url + '?' + urllib.urlencode(params)
 search_response = json.loads(urllib.urlopen(url).read())
 
+if not 'result' in search_response:
+  print "Error: freebase denied request"
+  print search_response
+  exit(-1)
+
 if (len(search_response['result']) == 0):
-  print "Error: phrase <", query, "> not found in freebase"
+  print "Error: phrase <", args.query, "> not found in freebase"
   exit(-1)
 
 found_description = False
