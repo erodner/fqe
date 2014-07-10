@@ -27,13 +27,14 @@ class freebase:
     self.ignoreList = set()
 
 
-  def addIgnoreList ( self, ignorelistfn ):
+  def addIgnoreList ( self, ignorelistfn, verbose=False ):
     ''' Add a list (filename) of words that will be ignored for the expanding operations '''
     try:
       with open(ignorelistfn) as f:
         for line in f:
           self.ignoreList.add ( line.rstrip().lower() )
-      print 'Length of the ignore list is', len(self.ignoreList)
+      if verbose:
+        print 'Length of the ignore list is', len(self.ignoreList)
     except:
       print "Error loading the ignore list %s." % (ignorelistfn)
 
@@ -46,7 +47,7 @@ class freebase:
     return params
 
 
-  def expandAllWords ( self, s, params ):
+  def expandAllWords ( self, s, params, verbose=False ):
     """ Expand all out-of-vocabulary words """
     newsentence = ""
 
@@ -60,16 +61,19 @@ class freebase:
     for word in words:
       d = word
       if not word in self.ignoreList:
-        print "Searching for", word
+        if verbose:
+          print "Searching for", word
         search_response = self.query ( word, self.defaultfilter )
         if not search_response < 0:
           desc = self.obtainDescription ( search_response, params['use_only_first_sentence'] );
           if len(desc)>0:
             d = "( " + word + " : " + desc + " )"
         else:
-          print "Unable to find", word
+          if verbose:
+            print "Unable to find", word
       else:
-        print "Ignoring", word
+        if verbose:
+          print "Ignoring", word
      
       if len(newsentence) > 0:
         newsentence = newsentence + " " + d
@@ -100,18 +104,20 @@ class freebase:
 
     return noungroups
 
-  def expandNounGroups ( self, s, params ):
+  def expandNounGroups ( self, s, params, verbose=False ):
     ''' Expand only groups of nouns with freebase descriptions '''
 
     noungroups = self.getNounGroups ( s )
    
-    print "Noun groups:", ';'.join(noungroups)
+    if verbose:
+      print "Noun groups:", ';'.join(noungroups)
 
     # obtain freebase descriptions for each noungroup if available 
     rep_hash = {}
     for noungroup in noungroups:
       if not noungroup in self.ignoreList:
-        print "Trying to expand noun group", noungroup
+        if verbose:
+          print "Trying to expand noun group", noungroup
         search_response = self.query ( noungroup, self.defaultfilter )
         if not search_response < 0:
           desc = self.obtainDescription ( search_response, params['use_only_first_sentence'] );
@@ -120,7 +126,8 @@ class freebase:
             rep_hash[noungroup] = d
     
     if len(rep_hash)>0:
-      print rep_hash
+      if verbose:
+        print rep_hash
       newsentence = multireplace.mreplace ( s, rep_hash )
     else:
       newsentence = s
@@ -128,25 +135,28 @@ class freebase:
     return newsentence
     
 
-  def expandSentence ( self, sentence, params ): 
+  def expandSentence ( self, sentence, params, verbose=False ): 
     ''' Expand words in the sentence with freebase descriptions when available '''
     
-    print "Processing:", sentence
+    if verbose:
+      print "Processing:", sentence
     s = sentence.lower()
 
     params = self.set_default_params( params )
 
     # Method EXPAND_ALL_WORDS: expand all out-of-vocabulary words
     if params['mode'] == 'EXPAND_ALL_WORDS':
-      newsentence = self.expandAllWords ( s, params )
+      newsentence = self.expandAllWords ( s, params, verbose )
     # Method EXPAND_NOUN_GROUPS: expand all noun groups
     elif params['mode'] == 'EXPAND_NOUN_GROUPS':
-      newsentence = self.expandNounGroups ( s, params ) 
+      newsentence = self.expandNounGroups ( s, params, verbose ) 
     else:
-      print "Mode unknown:", params['mode']
+      if verbose:
+        print "Mode unknown:", params['mode']
       return ""
 
-    print "Output:", newsentence
+    if verbose:
+      print "Output:", newsentence
     
     return newsentence
 
